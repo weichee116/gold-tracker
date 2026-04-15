@@ -1,55 +1,53 @@
-import requests
-from bs4 import BeautifulSoup
-import streamlit as st  # 新增：引入 Streamlit 库
-
-def get_cimb_gold_rates():
-    # ... (抓取逻辑与之前完全一致) ...
-    url = "https://www.cimb.com.my/en/personal/help-support/rates-charges/interest-rates-charges/interest-rates/gold-investment-account.html"
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-    }
-    
-    try:
-        response = requests.get(url, headers=headers, timeout=10)
-        response.raise_for_status() 
-        soup = BeautifulSoup(response.text, 'html.parser')
-        tables = soup.find_all('table')
-        
-        for table in tables:
-            rows = table.find_all('tr')
-            for row in rows:
-                cols = row.find_all(['td', 'th'])
-                cols_text = [ele.text.strip() for ele in cols]
-                
-                if len(cols_text) >= 3 and "CIMB Clicks" in cols_text[0]:
-                    bank_selling = float(cols_text[1].replace(',', ''))
-                    bank_buying = float(cols_text[2].replace(',', ''))
-                    spread = round(bank_selling - bank_buying, 4)
-                    
-                    return {
-                        "Bank": "CIMB eGIA",
-                        "Bank Selling (RM/g)": bank_selling,
-                        "Bank Buying (RM/g)": bank_buying,
-                        "Spread (RM)": spread
-                    }
-        return "未能定位到价格表格，请检查银行网页结构是否发生改版。"
-    except Exception as e:
-        return f"抓取异常: {e}"
+import datetime # 顶部记得加这个，用来显示更新时间
 
 # ====== 关键修改部分：适配 Streamlit 网页显示 ======
 
-st.title("🏦 马来西亚本地银行黄金利差监控")
-st.markdown("当前测试数据源：**CIMB eGIA**")
+st.title("🏦 大马银行黄金利差监控器")
+st.markdown("实时追踪本地银行实体金/纸黄金买卖点差，寻找最佳入场时机。")
 
-# 添加一个交互按钮
-if st.button("获取最新 CIMB 价格"):
-    # 加一个加载动画，提升体验
+# 添加一个好看的分割线
+st.divider()
+
+st.markdown("#### 🟡 当前监控：CIMB eGIA")
+
+# 把按钮设置为主色调 (type="primary")，视觉更突出
+if st.button("🔄 获取最新实时行情", type="primary"):
     with st.spinner("正在模拟浏览器前往 CIMB 官网抓取数据..."):
         result = get_cimb_gold_rates()
         
         if isinstance(result, dict):
-            st.success("✅ 抓取成功！")
-            # 以漂亮的 JSON 结构卡片显示在网页上
-            st.json(result)  
+            st.success(f"✅ 数据抓取成功！(更新时间: {datetime.datetime.now().strftime('%H:%M:%S')})")
+            
+            # --- ✨ 核心美化排版区 ---
+            # 创建三个并排的列
+            col1, col2, col3 = st.columns(3)
+            
+            # 使用 metric 组件展示核心指标，非常像专业的看盘软件
+            with col1:
+                st.metric(
+                    label="📈 银行卖出价 (您买入)", 
+                    value=f"RM {result['Bank Selling (RM/g)']}"
+                )
+            
+            with col2:
+                st.metric(
+                    label="📉 银行买入价 (您卖出)", 
+                    value=f"RM {result['Bank Buying (RM/g)']}"
+                )
+            
+            with col3:
+                # 重点突出利差
+                st.metric(
+                    label="⚖️ 买卖利差 (Spread)", 
+                    value=f"RM {result['Spread (RM)']}"
+                )
+            # ---------------------------
+
+            st.divider()
+            
+            # 把原本丑丑的 JSON 折叠起来，平时不占地方，但 Debug 时可以点开看
+            with st.expander("🛠️ 查看开发者原始数据 (JSON)"):
+                st.json(result)
+                
         else:
             st.error(f"❌ 抓取失败：{result}")
