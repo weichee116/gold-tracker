@@ -67,23 +67,39 @@ def ai_quant_engine(current_price, spread, df, risk_level):
     
     return round(ai_target_price, 2), round(mean_price, 2), round(std_dev, 2)
 
-
 # ==========================================
 # 3. Streamlit 前端展示模块
 # ==========================================
 st.set_page_config(page_title="AI 黄金量化交易端", layout="centered")
 
-# --- ✨ 品牌与标题区 (使用本地上传的 Logo 图片) ---
+# --- ✨ 可爱魔法 CSS 代码注入 ---
+st.markdown("""
+<style>
+/* 给图片加上可爱的圆角和轻微的粉色立体阴影 */
+img {
+    border-radius: 18px; 
+    box-shadow: 0 4px 12px rgba(255, 105, 180, 0.25); 
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Q弹动画曲线 */
+}
+/* 鼠标悬停时的放大和轻微摇摆效果 */
+img:hover {
+    transform: scale(1.15) rotate(4deg); 
+}
+</style>
+""", unsafe_allow_html=True)
+# --------------------------------
+
+# --- 品牌与标题区 ---
 col_logo, col_title = st.columns([1, 5])
 with col_logo:
     try:
-        # 读取您上传到 GitHub 的同名图片文件
-        st.image("cimb_logo.png", width=80)
+        # 尺寸已经优化为 60，更精致，配合 CSS 会非常好看
+        st.image("cimb_logo.png", width=60)
     except:
         st.error("未找到 Logo 图片，请确保 cimb_logo.png 已上传至 GitHub。")
         
 with col_title:
-    st.markdown("<h2 style='margin-bottom: 0;'>本地黄金 AI 量化决策台</h2>", unsafe_allow_html=True)
+    st.markdown("<h3 style='margin-bottom: 0;'>本地黄金 AI 量化决策台</h3>", unsafe_allow_html=True)
     st.caption("自动分析历史波动率与实时点差，动态生成推荐入场区间。")
 
 st.divider()
